@@ -1,23 +1,75 @@
 <template>
   <div class="mode-page">
     <h2>モードを選択</h2>
-    <button @click="createRoom">パスワード付きルームを作成</button>
-    <button @click="joinRandom">ランダムな相手とプレイ</button>
+    <button @click="showCreate = true">パスワード付きルームを作成</button>
+    <button @click="showJoin   = true">パスワードでルームに参加</button>
+    <button @click="onRandom">ランダムな相手とプレイ</button>
+
+    <!-- ルーム作成用モーダル -->
+    <PasswordModal
+      v-if="showCreate"
+      @submit="onCreate"
+      @close="() => showCreate = false"
+    />
+
+    <!-- ルーム参加用モーダル -->
+    <JoinRoomModal
+      v-if="showJoin"
+      @submit="onJoin"
+      @close="() => showJoin = false"
+    />
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-const router = useRouter()
+import { useUserStore } from '../stores/user'
 
-function createRoom() {
-  // TODO: パスワード付きルーム作成画面へ
-  router.push('/create-room')
+// モーダルコンポーネント
+import PasswordModal from '../components/PasswordModal.vue'
+import JoinRoomModal from '../components/JoinRoomModal.vue'
+
+// サービス
+import {
+  createRoom,
+  findRandomRoom,
+  joinByKey
+} from '../services/roomService'
+
+const router     = useRouter()
+const userStore  = useUserStore()
+const showCreate = ref(false)
+const showJoin   = ref(false)
+
+// 新規ルーム作成
+async function onCreate(password) {
+  try {
+    const roomId = await createRoom(userStore.uid, userStore.nickname, password)
+    router.push({ name: 'WaitingRoom', params: { roomId } })
+  } catch (e) {
+    alert(e.message)
+  }
 }
 
-function joinRandom() {
-  // TODO: ランダムマッチング処理
-  router.push('/random-match')
+// ルームキーで参加
+async function onJoin(key) {
+  try {
+    const roomId = await joinByKey(key, userStore.uid, userStore.nickname)
+    router.push({ name: 'WaitingRoom', params: { roomId } })
+  } catch (e) {
+    alert(e.message)
+  }
+}
+
+// ランダムマッチ
+async function onRandom() {
+  try {
+    const roomId = await findRandomRoom()
+    router.push({ name: 'WaitingRoom', params: { roomId } })
+  } catch (e) {
+    alert(e.message)
+  }
 }
 </script>
 
@@ -30,6 +82,6 @@ function joinRandom() {
   display: block;
   width: 80%;
   margin: 1em auto;
-  padding: 0.5em;
+  padding: .75em;
 }
 </style>
