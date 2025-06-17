@@ -3,7 +3,7 @@ import { createApp } from 'vue'
 import App           from './App.vue'
 import { createPinia } from 'pinia'
 import { loginAnonymously } from './firebase'
-import { useUserStore }     from './stores/user'
+import { useUserStore }     from './services/userService'
 import { router }          from './router'
 
 const app = createApp(App)

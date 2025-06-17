@@ -3,9 +3,7 @@
   <router-view/>
 </template>
 
-<script setup>
-// ここに HelloWorld の import は不要です
-</script>
+<script setup></script>
 
 <style>
 body {

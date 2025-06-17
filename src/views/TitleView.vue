@@ -24,7 +24,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter }     from 'vue-router'
-import { useUserStore }  from '../stores/user'
+import { useUserStore }  from '../services/userService'
 import { registerUser }  from '../services/userService'
 
 const userStore = useUserStore()

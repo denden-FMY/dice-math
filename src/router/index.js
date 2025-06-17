@@ -1,3 +1,4 @@
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import TitleView      from '../views/TitleView.vue'
 import ModeSelectView from '../views/ModeSelectView.vue'

@@ -32,7 +32,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter }        from 'vue-router'
-import { useUserStore }               from '../stores/user'
+import { useUserStore }               from '../services/userService'
 import {
   getFirestore,
   collection,
@@ -44,9 +44,9 @@ import {
   doc,
   updateDoc,
   arrayRemove,
-  getDoc
 } from 'firebase/firestore'
-import { deleteRoom } from '../services/roomService'
+import { leaveRoom } from '../services/roomService'
+import { finishGame } from '../services/gameService'
 
 const route        = useRoute()
 const router       = useRouter()
@@ -97,7 +97,7 @@ onMounted(() => {
     /* 人数が減った → 相手離脱 */
     if (newCount < prevCount) {
       partnerLeft.value = true
-      countdown.value   = 5
+      countdown.value   = 15
       clearInterval(leaveTimer)
       leaveTimer = setInterval(() => {
         countdown.value--
@@ -105,7 +105,7 @@ onMounted(() => {
           clearInterval(leaveTimer)
           onForfeit()
         }
-      }, 1_000)
+      }, 1000)
     }
 
     /* 人数が戻った → カウント停止 */
@@ -127,7 +127,6 @@ onUnmounted(() => {
   if (unsubChat)  unsubChat()
   if (unsubRoom)  unsubRoom()
   clearInterval(leaveTimer)
-  window.removeEventListener('popstate', onBack)
 })
 
 /* ---------------- 送信 ---------------- */
@@ -147,19 +146,17 @@ async function sendMessage () {
 async function onForfeit () {
   alert('相手が戻りませんでした。不戦勝です。')
   await removeSelfFromRoom()      // 念のため自分も削除
-  await deleteRoom(roomId).catch(()=>{}) // ホストならルーム削除
+  await finishGame(roomId, userStore.uid).catch(() => {}) // ゲーム終了処理
   router.replace({ name: 'ModeSelect' })
 }
 
 /* -------------- 戻るボタン & ブラウザバック -------------- */
 async function onBack () {
   const ok = window.confirm('モード選択に戻りますか？\n進行中のゲームは中断されます。')
-  if (!ok) {
-    history.pushState(null, '', location.href) // 戻らない
-    return
-  }
-  await removeSelfFromRoom()
-  router.replace({ name: 'ModeSelect' })
+  if (!ok) return
+  
+  await removeSelfFromRoom() // 念のため自分も削除
+  router.replace({ name: 'ModeSelect' }) // モード選択に戻
 }
 </script>
 

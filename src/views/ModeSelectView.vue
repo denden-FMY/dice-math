@@ -1,3 +1,4 @@
+<!-- src/views/ModeSelectView.vue -->
 <template>
   <div class="mode-page">
     <h2>モードを選択</h2>
@@ -24,7 +25,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '../stores/user'
+import { useUserStore } from '../services/userService'
 
 // モーダルコンポーネント
 import PasswordModal from '../components/PasswordModal.vue'
@@ -34,7 +35,8 @@ import JoinRoomModal from '../components/JoinRoomModal.vue'
 import {
   createRoom,
   findRandomRoom,
-  joinByKey
+  joinByKey,
+  updateStatus
 } from '../services/roomService'
 
 const router     = useRouter()
@@ -65,7 +67,7 @@ async function onJoin(key) {
 // ランダムマッチ
 async function onRandom() {
   try {
-    const roomId = await findRandomRoom()
+    const roomId = await findRandomRoom(userStore.uid, userStore.nickname)
     router.push({ name: 'WaitingRoom', params: { roomId } })
   } catch (e) {
     alert(e.message)

@@ -1,3 +1,4 @@
+<!-- src/views/WaitingRoomView.vue -->
 <template>
   <div class="waiting-page">
     <h2>ルーム {{ roomId }} で待機中…</h2>
@@ -13,8 +14,9 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter }        from 'vue-router'
 import { doc, onSnapshot, getDoc }    from 'firebase/firestore'
 import { db }                         from '../firebase'
-import { deleteRoom }                 from '../services/roomService'
-import { useUserStore }               from '../stores/user'
+import { leaveRoom, updateStatus } from '../services/roomService'
+import { markGameStart } from '../services/gameService'
+import { useUserStore }               from '../services/userService'
 
 const route        = useRoute()
 const router       = useRouter()
@@ -48,36 +50,21 @@ const unsub = onSnapshot(roomRef, snap => {
   participants.value = data.participants || []
   roomHostUid = data.host.uid
 
-  if (participants.value.length >= 2) {
-    unsub()
+  if (participants.value.length >= 2 && data.status === 'waiting') {     // ★ 修正
+    markGameStart(roomId).catch(()=>{})                                  // ★ 追加
     router.push({ name:'GameView', params:{ roomId } })
   }
 })
 
-// コンポーネント破棄／画面離脱時のクリーンアップ
-onUnmounted(async () => {
-  window.removeEventListener('popstate', onBack)
-  unsub()
-  const isOnlyHost = userStore.uid === roomHostUid && participants.value.length <= 1
-  if (isOnlyHost) {
-    await deleteRoom(roomId)
-  }
-})
+/* ---------- コンポーネント破棄 ---------- */
+onUnmounted(() => { unsub() })
 
 // 戻る処理
-function onBack() {
-  // ブラウザバック or 戻るボタン時に確認
-  const ok = window.confirm('モード選択画面に戻りますか？\n現在の待機ルームはキャンセルされます。')
-  if (ok) {
-    // ホストならルームを削除
-    if (userStore.uid === roomHostUid && participants.value.length <= 1) {
-      deleteRoom(roomId).catch(console.error)
-    }
-    router.replace({ name: 'ModeSelect' })
-  } else {
-    // キャンセルしたら履歴を戻して押し戻す
-    history.pushState(null, '', location.href)
-  }
+async function onBack () {
+  const ok = window.confirm('モード選択に戻りますか？\n待機ルームはキャンセルされます。')
+  if (!ok) return
+  await leaveRoom(roomId, userStore.uid, userStore.nickname).catch(()=>{})
+  router.replace({ name: 'ModeSelect' })
 }
 </script>
 

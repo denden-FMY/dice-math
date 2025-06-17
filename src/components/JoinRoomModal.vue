@@ -1,3 +1,4 @@
+<!-- src/components/JoinRoomModal.vue -->
 <template>
   <div class="backdrop">
     <div class="modal">
