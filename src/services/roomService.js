@@ -33,6 +33,12 @@ export async function createRoom(hostUid, hostNick, password) {
 
 /** ランダムな空きルームを 1 件取得して ID を返す */
 export async function findRandomRoom(uid, nickname) {
+  const q = query(                                     // ★ 追加ここだけ
+    collection(db, 'rooms'),
+    where('status', '==', 'waiting'),
+    where('password', '==', ''),
+    limit(1)
+  )
   const snap = await getDocs(q)
   if (snap.empty) throw new Error('空きルームがありません')
   const roomRef = snap.docs[0].ref

@@ -67,7 +67,13 @@ async function onJoin(key) {
 // ランダムマッチ
 async function onRandom() {
   try {
-    const roomId = await findRandomRoom(userStore.uid, userStore.nickname)
+    // ★ 修正: 空きが無ければ「パスワード空」の公開ルームを新規作成
+    let roomId
+    try {
+      roomId = await findRandomRoom(userStore.uid, userStore.nickname)
+    } catch {
+      roomId = await createRoom(userStore.uid, userStore.nickname, '')   // password=''
+    }
     router.push({ name: 'WaitingRoom', params: { roomId } })
   } catch (e) {
     alert(e.message)
